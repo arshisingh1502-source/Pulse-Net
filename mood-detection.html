@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PulseNet – Mood Detection (Live)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(120deg,#3091f2 0%, #e5f0ff 100%);
+            color: #164076;
+            margin: 0;
+            padding: 0;
+            transition: background 0.6s;
+        }
+        .container {
+            max-width: 880px;
+            margin: 40px auto;
+            padding: 28px 26px;
+            background: rgba(255,255,255,0.92);
+            border-radius: 18px;
+            box-shadow: 0 13px 40px 0 rgba(72,153,224, 0.18);
+        }
+        h1 {
+            color: #3091f2;
+            letter-spacing: 1.5px;
+            font-size: 2.1em;
+            text-align: center;
+            margin-bottom: 8px;
+            animation: fadeDown 0.9s;
+        }
+        h2 {
+            color: #2163bc;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 1.05em;
+        }
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-25px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .section {
+            margin-top: 22px;
+            margin-bottom: 18px;
+            padding: 18px 16px;
+            border-radius: 12px;
+            background: #e9f3ff;
+            box-shadow: 0 2px 10px rgba(35,108,202,0.06);
+            position: relative;
+        }
+        .input-row {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .prompt-input {
+            flex: 1 1 58%;
+            min-width: 220px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 1.05em;
+            border: 2px solid #3091f2;
+            background: #fff;
+            color: #2163bc;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .prompt-input:focus {
+            border-color: #2163bc;
+            box-shadow: 0 6px 18px rgba(49,145,242,0.06);
+            outline: none;
+        }
+        .btn {
+            background: linear-gradient(90deg, #3091f2 60%, #2163bc 100%);
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.98em;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 3px 9px rgba(49,145,242,0.07);
+            transition: transform 0.16s, box-shadow 0.16s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(47,116,186,0.14); }
+        .mood {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1em;
+            font-weight: 700;
+            padding: 8px 14px;
+            border-radius: 16px;
+            background: #3091f2;
+            color: #eaf7ff;
+            box-shadow: 0 6px 20px rgba(49,145,242,0.08);
+        }
+        .mood .emoji {
+            font-size: 1.2em;
+            transform-origin: center;
+            transition: transform 0.25s;
+        }
+        .details {
+            margin-top: 12px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .chip {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(33,99,188,0.08);
+            font-size: 0.95em;
+            color: #164076;
+            box-shadow: 0 2px 8px rgba(49,145,242,0.04);
+        }
+        .explanation {
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 10px;
+            color: #163c5f;
+            font-size: 0.98em;
+            box-shadow: 0 3px 12px rgba(49,145,242,0.04);
+        }
+        .keyword-list { font-weight:600; color: #0f3a65; }
+        .history {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        .history-card {
+            padding: 10px;
+            border-radius: 10px;
+            background: #fff;
+            font-size: 0.94em;
+            color: #164076;
+            box-shadow: 0 2px 8px rgba(49,145,242,0.04);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:8px;
+        }
+        .small-btn {
+            padding: 6px 8px;
+            font-size: 0.86em;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(90deg,#2163bc,#3091f2);
+            color: #fff;
+        }
+        .matched-highlight { margin-top:8px; font-size:0.95em; color:#0f3a65; }
+        @media (max-width:700px) {
+            .container { margin:18px; padding:16px; }
+            h1 { font-size:1.6em; }
+            .prompt-input { flex-basis: 100%; }
+            .mood { margin-top:8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" role="main">
+        <h1>PulseNet – Live Mood Detector</h1>
+
+        <div class="section" id="moodSection" aria-live="polite">
+            <h2>Mood Detection (live)</h2>
+            <p style="margin:0; font-size:0.95em; color:#16407688;">
+                Type how someone is feeling (or paste a message). Detection runs as you type. This runs locally in your browser.
+            </p>
+
+            <div class="input-row" style="margin-top:12px;">
+                <input id="promptInput" class="prompt-input" aria-label="Mood input" placeholder="e.g. I'm feeling really anxious about tomorrow's exam...">
+                <button id="analyzeBtn" class="btn" title="Analyze now">Analyze Mood</button>
+
+                <div id="moodDisplay" class="mood" aria-live="polite" style="margin-left:auto;">
+                    <span class="emoji" id="moodEmoji">😐</span>
+                    <span id="moodLabel">Neutral</span>
+                </div>
+            </div>
+
+            <div class="details" id="detailRow">
+                <div class="chip" id="confidenceChip">Confidence: —</div>
+                <div class="chip" id="timeChip">Updated: —</div>
+                <div class="chip" id="matchedChip">Matches: 0</div>
+            </div>
+
+            <div class="explanation" id="explanation" aria-live="polite">
+                <strong>Explanation:</strong>
+                <div id="explainText" style="margin-top:6px; color:#0f3a65;">Detection results will appear here — matched keywords, score breakdown, and suggestions.</div>
+            </div>
+
+            <div class="matched-highlight" id="matchedHighlight" aria-hidden="true"></div>
+
+            <div style="margin-top:14px;">
+                <strong>Recent history</strong>
+                <div class="history" id="historyList" aria-live="polite"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**********************************************
+         * Live Client-side Mood Detection
+         * - Debounced live detection (runs as user types)
+         * - Word-boundary matching (safe matching)
+         * - Confidence score, explanation, emoji + timestamp
+         * - localStorage history (last 10)
+         **********************************************/
+
+        // --- Keyword dictionaries (expandable)
+        const KEYWORDS = {
+            happy: ["happy", "joy", "excited", "grateful", "amazing", "great", "proud", "hopeful", "content", "elated", "cheerful", "pleased"],
+            sad: ["sad", "down", "depressed", "hopeless", "blue", "unhappy", "lost", "upset", "disappointed", "cry", "lonely"],
+            angry: ["angry", "mad", "furious", "annoyed", "irritated", "rage", "frustrated", "hate", "resentful"],
+            fearful: ["afraid", "anxious", "scared", "fear", "nervous", "worried", "stressed", "panic", "overwhelmed"],
+            calm: ["calm", "relaxed", "okay", "fine", "peaceful", "serene", "composed"]
+        };
+
+        // Mood display mapping: label, emoji, color (used for subtle background switch)
+        const MOOD_MAP = {
+            happy: {emoji: "😄", color: "linear-gradient(120deg,#8be78b 0%, #e6fff0 100%)"},
+            sad:   {emoji: "😔", color: "linear-gradient(120deg,#c8dbff 0%, #f7fbff 100%)"},
+            angry: {emoji: "😠", color: "linear-gradient(120deg,#ffd1d1 0%, #fff5f5 100%)"},
+            fearful:{emoji:"😟", color: "linear-gradient(120deg,#e6f0ff 0%, #ffffff 100%)"},
+            calm:  {emoji: "😌", color: "linear-gradient(120deg,#e8f6ff 0%, #ffffff 100%)"},
+            neutral:{emoji:"😐", color: "linear-gradient(120deg,#3091f2 0%, #e5f0ff 100%)"}
+        };
+
+        // Weights for ensemble (text-only here; easy to extend)
+        const WEIGHTS = { text: 0.9, wearable: 0.0, context: 0.1 };
+
+        // DOM refs
+        const inputEl = document.getElementById('promptInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const moodEmoji = document.getElementById('moodEmoji');
+        const moodLabel = document.getElementById('moodLabel');
+        const confidenceChip = document.getElementById('confidenceChip');
+        const timeChip = document.getElementById('timeChip');
+        const matchedChip = document.getElementById('matchedChip');
+        const explainText = document.getElementById('explainText');
+        const matchedHighlight = document.getElementById('matchedHighlight');
+        const historyList = document.getElementById('historyList');
+
+        // Debounce helper
+        function debounce(fn, wait=420){
+            let t;
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(()=>fn(...args), wait);
+            };
+        }
+
+        // Utility: create regex that matches whole words (case-insensitive)
+        function makeWordRegex(word){
+            // escape special chars
+            const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return new RegExp('\\b' + esc + '\\b', 'i');
+        }
+
+        // Main text scoring function: returns object {scores, top, confidence, matches}
+        function analyzeText(text){
+            const normalized = text.trim();
+            const totalWords = normalized.split(/\s+/).filter(Boolean).length || 0;
+            const scores = { happy:0, sad:0, angry:0, fearful:0, calm:0 };
+
+            const matches = { happy:[], sad:[], angry:[], fearful:[], calm:[] };
+
+            // For each category, check occurrences with word boundaries
+            for(const [cat, words] of Object.entries(KEYWORDS)){
+                for(const w of words){
+                    const rx = makeWordRegex(w);
+                    const m = normalized.match(new RegExp(rx, 'gi'));
+                    if(m && m.length>0){
+                        scores[cat] += m.length;               // count occurrences
+                        matches[cat].push(...new Array(m.length).fill(w));
+                    }
+                }
+            }
+
+            // also check punctuation & exclamation (very rough): exclamation tends to indicate stronger emotion
+            const exclamations = (normalized.match(/!/g) || []).length;
+            if(exclamations) {
+                // boost the highest scoring category slightly
+                let maxCat = Object.keys(scores).reduce((a,b)=> scores[a]>=scores[b]?a:b);
+                if(scores[maxCat] > 0) scores[maxCat] += Math.min(2, exclamations);
+            }
+
+            // Compute normalized text-score: highest / (sum + 1)
+            const sumScores = Object.values(scores).reduce((a,b)=>a+b,0);
+            let topMood = 'neutral';
+            let topScore = 0;
+            if(sumScores > 0){
+                // find highest
+                topMood = Object.keys(scores).reduce((a,b)=> scores[a]>=scores[b]?a:b);
+                topScore = scores[topMood];
+            }
+
+            // Confidence heuristic:
+            // baseConfidence = (topScore / (sumScores + 0.0001)) * (1 - 1/(1+totalWords))
+            let baseConfidence = 0;
+            if(sumScores > 0){
+                baseConfidence = (topScore / sumScores) * Math.min(0.95, 0.45 + Math.log(1 + totalWords)/6);
+            } else {
+                baseConfidence = 0.12; // very low when no matches
+            }
+
+            // scale to [0..100]
+            let confidencePct = Math.round(baseConfidence * 100);
+
+            // If topScore very low but words present, nudge to neutral
+            if(sumScores === 0 && totalWords > 0) {
+                topMood = 'neutral';
+                confidencePct = Math.max(confidencePct, 18);
+            }
+
+            // Prepare list of matched unique keywords for explanation
+            const matchedList = [];
+            for(const [k, arr] of Object.entries(matches)) {
+                if(arr.length>0) matchedList.push(...arr.map(x=>x));
+            }
+
+            return {
+                scores, top: topMood, confidence: confidencePct, matches: matchedList, totalWords, sumScores
+            };
+        }
+
+        // Compose explanation string and update UI
+        function presentResult(name, text){
+            const res = analyzeText(text);
+            const now = new Date();
+            const ts = now.toLocaleString();
+
+            // If neutral and little content, make label 'Neutral'
+            const label = res.top || 'neutral';
+            const emoji = MOOD_MAP[label]?.emoji || MOOD_MAP.neutral.emoji;
+
+            // Update display
+            moodEmoji.textContent = emoji;
+            moodLabel.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+            confidenceChip.textContent = `Confidence: ${res.confidence}%`;
+            timeChip.textContent = `Updated: ${now.toLocaleTimeString()}`;
+            matchedChip.textContent = `Matches: ${res.matches.length}`;
+
+            // subtle emoji bounce for non-neutral
+            if(label !== 'neutral') {
+                moodEmoji.style.transform = 'scale(1.2)';
+                setTimeout(()=> moodEmoji.style.transform = 'scale(1)', 260);
+            }
+
+            // Explanation text
+            let explanation = '';
+            if(res.matches.length > 0){
+                const topMatches = Array.from(new Set(res.matches)).slice(0,8).join(', ');
+                explanation += `<div>Detected mood: <strong>${label}</strong> with <strong>${res.confidence}%</strong> confidence.</div>`;
+                explanation += `<div style="margin-top:6px;">Matched keywords: <span class="keyword-list">${topMatches}</span></div>`;
+                explanation += `<div style="margin-top:8px; color:#235e9b;">Suggestion: ${suggestionFor(label)}</div>`;
+            } else if(res.totalWords === 0){
+                explanation = `<div>No input provided. Type a sentence to detect mood.</div>`;
+            } else {
+                explanation = `<div>No clear emotional keywords found. The message may be neutral or use uncommon phrasing.</div>`;
+                explanation += `<div style="margin-top:6px; color:#235e9b;">Try using words like "anxious", "sad", "happy" to get a clearer reading.</div>`;
+            }
+            explainText.innerHTML = explanation;
+
+            // Show matched highlighted snippet (safe preview)
+            if(res.matches.length>0){
+                matchedHighlight.innerHTML = 'Keywords matched: ' + res.matches.slice(0,12).map(k=>`<strong>${escapeHtml(k)}</strong>`).join(', ');
+                matchedHighlight.style.display = 'block';
+            } else matchedHighlight.style.display = 'none';
+
+            // Save record to localStorage history
+            pushHistory({ name: name||'Anonymous', text: text, mood: label, confidence: res.confidence, timestamp: now.getTime() });
+
+            // change page background subtly to reflect mood (not too intrusive)
+            document.body.style.background = MOOD_MAP[label]?.color || MOOD_MAP.neutral.color;
+        }
+
+        // A small helper to suggest next steps
+        function suggestionFor(mood){
+            switch(mood){
+                case 'happy': return 'Share your joy, celebrate a small win, or help someone else.';
+                case 'sad': return 'Try writing your feelings, short breathing exercise, or reach out to a friend.';
+                case 'angry': return 'Take a short walk, breathe deeply, or step away from the trigger for a moment.';
+                case 'fearful': return 'Name the fear, ground with the 5-4-3-2-1 sense exercise, breathe slowly.';
+                case 'calm': return 'Maintain the calm — consider a mindful pause if needed.';
+                default: return 'Try a short grounding or breathing exercise.';
+            }
+        }
+
+        // History handling (last 10 entries)
+        const HISTORY_KEY = 'pulsenet_mood_history_v1';
+        function loadHistory(){
+            try {
+                const raw = localStorage.getItem(HISTORY_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch(e){ return []; }
+        }
+        function saveHistory(arr){
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(-10)));
+            renderHistory();
+        }
+        function pushHistory(record){
+            const arr = loadHistory();
+            arr.push(record);
+            saveHistory(arr);
+        }
+        function renderHistory(){
+            const arr = loadHistory().slice().reverse(); // newest first
+            historyList.innerHTML = '';
+            if(arr.length === 0){
+                historyList.innerHTML = '<div style="color:#16407688;">No recent detections.</div>';
+                return;
+            }
+            arr.forEach((r, idx)=>{
+                const div = document.createElement('div');
+                div.className = 'history-card';
+                div.innerHTML = `<div style="flex:1;"><strong>${r.mood.charAt(0).toUpperCase()+r.mood.slice(1)}</strong> — <div style="font-size:0.85em;color:#2b587d;">${truncate(r.text,40)}</div></div>
+                                 <div style="display:flex;align-items:center;gap:6px;">
+                                   <button class="small-btn" onclick='replayHistory(${idx})'>View</button>
+                                 </div>`;
+                historyList.appendChild(div);
+            });
+        }
+        // replayHistory uses reverse order index mapping
+        function replayHistory(reverseIdx){
+            const arr = loadHistory().slice().reverse();
+            const item = arr[reverseIdx];
+            if(!item) return;
+            inputEl.value = item.text;
+            presentResult(item.name, item.text);
+        }
+
+        function truncate(s, len=40){ return s.length>len ? s.slice(0,len-1)+'…' : s; }
+
+        // Safe HTML escape for matched highlight
+        function escapeHtml(str) {
+            return str.replace(/[&<>"'`=\/]/g, function(s) {
+              return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;',
+                '/': '&#x2F;',
+                '`': '&#x60;',
+                '=': '&#x3D;'
+              }[s];
+            });
+        }
+
+        // Event wiring
+        const runDetectDebounced = debounce(()=>{
+            const text = inputEl.value;
+            presentResult('', text);
+        }, 420);
+
+        inputEl.addEventListener('input', runDetectDebounced);
+        analyzeBtn.addEventListener('click', ()=> presentResult('', inputEl.value));
+
+        // initialize
+        renderHistory();
+
+        // If you want immediate detection at load if input is prefilled:
+        if(inputEl.value.trim().length > 0) presentResult('', inputEl.value);
+    </script>
+</body>
+</html>
